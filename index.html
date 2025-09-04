@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codora — Code Editor</title>
+<style>
+:root{--bg:#e9eef6;--panel:#ecf1f8;--muted:#6b7280;--accent:#6c5ce7;--radius:14px;--mono:monospace;}
+[data-theme="dark"]{--bg:#0f1724;--panel:#0b1220;--muted:#9aa4b2;--accent:#7c5cff;}
+body{margin:0;height:100vh;display:flex;justify-content:center;align-items:center;background:var(--bg);font-family:sans-serif;}
+.frame{border:2px solid #cfd8dc;border-radius:20px;box-shadow:8px 8px 16px #b0bec5,-8px -8px 16px #ffffff;width:98%;max-width:1200px;height:96%;padding:12px;display:flex;flex-direction:column;background: var(--panel);}
+.app{width:100%;height:100%;display:flex;flex-direction:column;}
+header,footer{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:14px;flex-wrap:wrap;gap:6px;}
+header h1{font-size:16px;margin:0;}
+.controls{display:flex;gap:6px;flex-wrap:wrap;}
+button,select,input{border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px;}
+button.primary{background:var(--accent);color:#fff;}
+.tab-bar{display:flex;gap:4px;margin:5px 0;overflow-x:auto;}
+.tab{padding:4px 10px;background:var(--bg);border-radius:8px;cursor:pointer;white-space:nowrap;}
+.tab.active{background:var(--accent);color:#fff;}
+.editor-area{flex:1;display:flex;flex-direction:row;gap:10px;margin:10px 0;position:relative;min-height:200px;}
+.pane{flex:1;display:flex;flex-direction:column;border-radius:var(--radius);overflow:hidden;background:var(--panel);min-height:0;}
+.editor-wrapper{display:flex;flex:1;overflow:hidden;border-radius:var(--radius);background:var(--panel);min-width:0;min-height:0;}
+#lineNumbers{width:40px;padding:10px;text-align:right;color:#888;user-select:none;overflow:hidden;font-family:monospace;flex-shrink:0;}
+[data-theme="dark"] #lineNumbers{background:#1b1f2a;color:#777;}
+.editor-content{flex:1;padding:10px;font-family:var(--mono);font-size:14px;line-height:1.4;overflow:auto;outline:none;resize:none;white-space:pre-wrap;word-break:break-word;box-sizing:border-box;border:none;background:transparent;}
+.toolbar{padding:6px;font-size:12px;color:var(--muted);background:var(--bg);display:flex;justify-content:space-between;align-items:center;}
+iframe{flex:1;border:none;background:white;}
+.find-replace{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0;}
+.find-replace input{flex:1;}
+/* --------- MOBILE & RESPONSIVE FIX --------- */
+@media(max-width:1024px){.editor-area{flex-direction:column;}.editor-wrapper{flex-direction:row;}.pane{height:45vh;}}
+@media(max-width:600px){#lineNumbers{width:30px;padding:6px;font-size:12px;}.editor-content{font-size:13px;padding:6px;}}
+</style>
+</head>
+<body data-theme="light">
+<div class="frame">
+<div class="app">
+<header>
+<h1>Codora</h1>
+<div class="controls">
+<select id="language"></select>
+<button id="run" class="primary">Run</button>
+<button id="refresh">Refresh</button>
+<button id="clearPreviewBtn">Clear Preview</button>
+<button id="saveLocalBtn">Save to Disk</button>
+<button id="newTabBtn">+ New Tab</button>
+<button id="deleteTabBtn">Delete Tab</button>
+<button id="clearTabBtn">Clear Tab</button>
+<button id="renameTabBtn">Rename Tab</button>
+<button id="duplicateTabBtn">Duplicate Tab</button>
+<button id="beautifyBtn">Beautify</button>
+<button id="themeToggle">Dark</button>
+</div>
+<div class="find-replace">
+<input type="text" id="findText" placeholder="Find">
+<input type="text" id="replaceText" placeholder="Replace">
+<button id="replaceBtn">Replace All</button>
+</div>
+<div class="tab-bar" id="tabBar"></div>
+</header>
+<div class="editor-area">
+<div class="pane">
+<div class="toolbar">Editor</div>
+<div class="editor-wrapper">
+<div id="lineNumbers"></div>
+<div id="editor" class="editor-content" contenteditable="true" spellcheck="false"></div>
+</div>
+</div>
+<div class="pane" id="previewPane">
+<div class="toolbar">Preview</div>
+<iframe id="preview"></iframe>
+</div>
+</div>
+<footer>© Codora 2025</footer>
+</div>
+</div>
+
+<script>
+// ---------------- Core Setup ----------------
+const editor=document.getElementById('editor');
+const preview=document.getElementById('preview');
+const tabBar=document.getElementById('tabBar');
+const languageSelect=document.getElementById('language');
+const runBtn=document.getElementById('run');
+const themeToggle=document.getElementById('themeToggle');
+const refreshBtn=document.getElementById('refresh');
+const newTabBtn=document.getElementById('newTabBtn');
+const deleteTabBtn=document.getElementById('deleteTabBtn');
+const clearTabBtn=document.getElementById('clearTabBtn');
+const renameTabBtn=document.getElementById('renameTabBtn');
+const duplicateTabBtn=document.getElementById('duplicateTabBtn');
+const beautifyBtn=document.getElementById('beautifyBtn');
+const clearPreviewBtn=document.getElementById('clearPreviewBtn');
+const saveLocalBtn=document.getElementById('saveLocalBtn');
+const findText=document.getElementById('findText');
+const replaceText=document.getElementById('replaceText');
+const replaceBtn=document.getElementById('replaceBtn');
+const lineNumbers=document.getElementById('lineNumbers');
+const body=document.body;
+
+// ---------------- Languages ----------------
+let languages=["html","css","js","python","java","c","cpp","csharp","php","ruby","go","swift","kotlin","rust","typescript","sql","r","perl","dart","scala","haskell","lua","bash","json","xml","markdown"];
+languages.forEach(l=>{let o=document.createElement('option');o.value=l;o.textContent=l.toUpperCase();languageSelect.appendChild(o)});
+languageSelect.value='html';
+
+// ---------------- Tabs ----------------
+let tabs=[{name:'index.html',content:'<!DOCTYPE html>\n<html>\n<head><title>Index</title></head>\n<body>\n<h1>Hello World</h1>\n</body>\n</html>'}];
+let currentTab=0;
+function saveCurrentTab(){tabs[currentTab].content=editor.innerText;}
+function loadCurrentTab(){editor.innerText=tabs[currentTab].content;updateLineNumbers();renderTabs();}
+function renderTabs(){tabBar.innerHTML='';tabs.forEach((t,i)=>{let tabDiv=document.createElement('div');tabDiv.textContent=t.name;tabDiv.className='tab'+(i===currentTab?' active':'');tabDiv.onclick=()=>{saveCurrentTab();currentTab=i;loadCurrentTab();};tabBar.appendChild(tabDiv);});}
+
+// ---------------- Line Numbers ----------------
+function updateLineNumbers(){lineNumbers.innerHTML=editor.innerText.split('\n').map((v,i)=>i+1).join('<br>');}
+editor.addEventListener('input',()=>{updateLineNumbers();saveCurrentTab();});
+editor.addEventListener('scroll',()=>{lineNumbers.scrollTop=editor.scrollTop;});
+
+// ---------------- Run / Preview ----------------
+runBtn.addEventListener('click',()=>{
+let lang=languageSelect.value;
+let content=editor.innerText;
+if(lang==='html'){preview.srcdoc=content;}
+else if(lang==='css'){preview.srcdoc=`<html><head><style>${content}</style></head><body><h2>CSS Preview</h2></body></html>`;}
+else if(lang==='js'){preview.srcdoc=`<html><body><script>${content}<\\/script></body></html>`;}
+else{preview.srcdoc=`<html><body><pre>${content}</pre></body></html>`;}});
+refreshBtn.addEventListener('click',()=>runBtn.click());
+clearPreviewBtn.addEventListener('click',()=>preview.srcdoc='');
+
+// ---------------- Theme ----------------
+themeToggle.addEventListener('click',()=>{let dark=body.getAttribute('data-theme')!=='dark';body.setAttribute('data-theme',dark?'dark':'light');themeToggle.textContent=dark?'Light':'Dark';});
+
+// ---------------- Tabs Controls ----------------
+newTabBtn.addEventListener('click',()=>{let fileName=prompt('Enter new file name:','newfile.txt');if(fileName){tabs.push({name:fileName,content:''});currentTab=tabs.length-1;loadCurrentTab();}});
+deleteTabBtn.addEventListener('click',()=>{if(confirm(`Delete "${tabs[currentTab].name}"?`)){tabs.splice(currentTab,1);if(tabs.length===0)tabs.push({name:'newfile.txt',content:''});currentTab=Math.min(currentTab,tabs.length-1);loadCurrentTab();}});
+clearTabBtn.addEventListener('click',()=>{if(confirm(`Clear content of "${tabs[currentTab].name}"?`)){tabs[currentTab].content='';loadCurrentTab();}});
+renameTabBtn.addEventListener('click',()=>{let newName=prompt('Enter new name:',tabs[currentTab].name);if(newName){tabs[currentTab].name=newName;renderTabs();}});
+duplicateTabBtn.addEventListener('click',()=>{let copy={...tabs[currentTab]};copy.name=tabs[currentTab].name.replace(/(\.\w+)?$/,'_copy$1');tabs.splice(currentTab+1,0,copy);currentTab++;loadCurrentTab();});
+
+// ---------------- Save ----------------
+saveLocalBtn.addEventListener('click',()=>{const blob=new Blob([editor.innerText],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=tabs[currentTab].name;a.click();URL.revokeObjectURL(a.href);});
+
+// ---------------- Find & Replace ----------------
+replaceBtn.addEventListener('click',()=>{editor.innerText=editor.innerText.split(findText.value).join(replaceText.value);updateLineNumbers();});
+
+// ---------------- Beautify ----------------
+beautifyBtn.addEventListener('click',()=>{editor.innerText=js_beautify(editor.innerText);updateLineNumbers();});
+function js_beautify(s){return s.replace(/\t/g,'    ').replace(/\s+$/gm,'');}
+
+// ---------------- Initialize ----------------
+loadCurrentTab();
+renderTabs();
+updateLineNumbers();
+</script>
+</body>
+</html>
