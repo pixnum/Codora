@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Codora — Code Editor</title>
+
+<!-- Base64 Favicon -->
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABjUlEQVQ4T6WTvUoDQRSGn7m7CQUWhUWoSAvdAP0BkHqCSILHILgBfAEpHQAfaQdgICQsXDyV9kSVwc6k3zU37XfPJSJYQjHGVFkTJgz3sBFB7LBcJ5q+NckFf6ZRVVVVLm2bqMcQhEEMRPChf3fD+MqieyXK+VDyCdfN1u4zjG8BBKpVKEsLBQA0kZ0d3cZz6fa7nM2miM5XZbJZ6vV69F0SoXAvv9/fVqNRu92u82H47BYhZ8vLa3t9/cbzPbDZbI4Dgf5/cPipVJdTzObzebxeDyWRSIRCKRKJmM/3+u12+1+v8/p/Pz8+v1+v3+vs9lMplWrq6s5fLz88fHx8QvV6vVqNRqNzc3Oho6Orp6QkGg0G/3+P0+nyRkZG9vT0pKirF7nvd8trjAZhYWFqqrq9eLxWLxUKpXq9XHh4eIhEIRoNBpbW1v5+frS0tJcLq6uqNjY0dHR2FQqEajQYDoaGhhYWFJCSkqKmohqNhuFwuIiIi0tLS8vLwQEBAAAAUlEQVQY02NgYGBgYGBgYGBgaGv4DQUFBQVw8f7+/jYGBg4ODiYmJhYGBgYwCgYGBgaGxsbGxsZGRnYDBwcvwHAGMCk2ceI4kAAAAASUVORK5CYII=">
+
+<!-- PWA Manifest Inline Base64 -->
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiQ29kb3JhIiwiY2hvcnQiOiJDb2RvcmEiLCJzaG9ydF9uYW1lIjoiQ29kb3JhIiwiaWNvbnMiOlsiZGF0YTppbWFnZS9wbmc7YmFzZTY0,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9h..."],"start_url":".","display":"standalone","background_color":"#ecf1f8","theme_color":"#6c5ce7"}">
+<meta name="theme-color" content="#6c5ce7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Codora">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABjUlEQVQ4T6WTvUoDQRSGn7m7CQUWhUWoSAvdAP0BkHqCSILHILgBfAEpHQAfaQdgICQsXDyV9kSVwc6k3zU37XfPJSJYQjHGVFkTJgz3sBFB7LBcJ5q+NckFf6ZRVVVVLm2bqMcQhEEMRPChf3fD+MqieyXK+VDyCdfN1u4zjG8BBKpVKEsLBQA0kZ0d3cZz6fa7nM2miM5XZbJZ6vV69F0SoXAvv9/fVqNRu92u82H47BYhZ8vLa3t9/cbzPbDZbI4Dgf5/cPipVJdTzObzebxeDyWRSIRCKRKJmM/3+u12+1+v8/p/Pz8+v1+v3+vs9lMplWrq6s5fLz88fHx8QvV6vVqNRqNzc3Oho6Orp6QkGg0G/3+P0+nyRkZG9vT0pKirF7nvd8trjAZhYWFqqrq9eLxWLxUKpXq9XHh4eIhEIRoNBpbW1v5+frS0tJcLq6uqNjY0dHR2FQqEajQYDoaGhhYWFJCSkqKmohqNhuFwuIiIi0tLS8vLwQEBAAAAUlEQVQY02NgYGBgYGBgYGBgaGv4DQUFBQVw8f7+/jYGBg4ODiYmJhYGBgYwCgYGBgaGxsbGxsZGRnYDBwcvwHAGMCk2ceI4kAAAAASUVORK5CYII=">
+
 <style>
 :root{--bg:#e9eef6;--panel:#ecf1f8;--muted:#6b7280;--accent:#6c5ce7;--radius:14px;--mono:monospace;}
 [data-theme="dark"]{--bg:#0f1724;--panel:#0b1220;--muted:#9aa4b2;--accent:#7c5cff;}
@@ -28,7 +40,6 @@ button.primary{background:var(--accent);color:#fff;}
 iframe{flex:1;border:none;background:white;}
 .find-replace{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0;}
 .find-replace input{flex:1;}
-/* --------- MOBILE & RESPONSIVE FIX --------- */
 @media(max-width:1024px){.editor-area{flex-direction:column;}.editor-wrapper{flex-direction:row;}.pane{height:45vh;}}
 @media(max-width:600px){#lineNumbers{width:30px;padding:6px;font-size:12px;}.editor-content{font-size:13px;padding:6px;}}
 </style>
@@ -77,7 +88,7 @@ iframe{flex:1;border:none;background:white;}
 </div>
 
 <script>
-// ---------------- Core Setup ----------------
+// ---------------- CORE JS ----------------
 const editor=document.getElementById('editor');
 const preview=document.getElementById('preview');
 const tabBar=document.getElementById('tabBar');
